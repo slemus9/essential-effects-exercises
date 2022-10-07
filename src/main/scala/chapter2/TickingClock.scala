@@ -20,6 +20,8 @@ object TickingClock extends IOApp {
       IO.println(s"Current Time: $h:$m:$s")  
     }
 
-    (printCurrentTime >> IO.sleep(1.second)).foreverM.void
+    printCurrentTime   >> 
+    IO.sleep(1.second) >> 
+    tickingClock
   } // <1>
 }
