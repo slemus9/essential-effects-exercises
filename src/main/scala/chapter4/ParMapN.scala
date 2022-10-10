@@ -115,7 +115,7 @@ object ParMapN extends IOApp.Simple {
 
     // t3.flatMap(IO.println)
     // t4.flatMap(IO.println)
-    // t5.flatMap(IO.println)
+    t5.flatMap(IO.println)
     // (t1.debug, t2Cancelled.debug)
     //   .parMapN(_ + _)
     //   .flatMap(IO.println)
