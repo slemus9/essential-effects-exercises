@@ -32,13 +32,14 @@ object Reactor {
         for {
           job <- scheduled.start
           _   <- stateRef.update(_.running(job))
-          _   <- registerOnComplete(job)
+          _   <- registerOnComplete(job).start // Is this the right way to do it?
           _   <- onStart(job.id).attempt
         } yield job
 
       val startNextJob: IO[Option[Job.Running[A]]] = 
         for {
           job     <- stateRef.modify(_.dequeue)
+          _       <- IO.println(job)
           running <- job.traverse(startJob)
         } yield running
 

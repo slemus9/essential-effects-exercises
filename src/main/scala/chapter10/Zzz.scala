@@ -1,6 +1,7 @@
 package chapter10
 
 import cats.effect.{IO, IOApp, Ref, Deferred}
+import cats.evidence.As
 
 trait Zzz {
   def sleep: IO[Unit] // semantically block unitl wakeUp is invoked
@@ -25,10 +26,11 @@ object Zzz {
     def awake: IO[Ref[IO, State]] = Deferred[IO, Unit].flatMap {
       sleeping => Ref.of(State(Awake, sleeping))
     }
-
   }
 
-  def create: IO[Zzz] = State.awake.map(stateR => new Zzz {
+  def awake: IO[Zzz] = State.awake.map(create)
+
+  def create (stateR: Ref[IO, State]): Zzz = new Zzz {
 
     def sleep: IO[Unit] = stateR.get.flatMap { state => 
       state.isSleeping match {
@@ -48,7 +50,7 @@ object Zzz {
         case Awake  => IO.unit 
       }
     }
-  })
+  }
 }
 
 object ZzzExample extends IOApp.Simple {
@@ -61,17 +63,23 @@ object ZzzExample extends IOApp.Simple {
     IO.println("Task 1. Sleeping") >> 
     zzz.sleep >>
     IO.pure(1).debug
- 
+
   def task2 (zzz: Zzz) =
-    IO.println("Task 2. Awake after 3 seconds") >>
-    IO.sleep(3.seconds) >>
+    IO.println("Task 2. Awake after 4 seconds") >>
+    IO.sleep(4.seconds) >>
     zzz.wakeUp >>
     IO.pure(2).debug
 
+  def task3 (zzz: Zzz) =
+    IO.println("Task 3. Try to sleep after two seconds") >>
+    IO.sleep(2.seconds) >>
+    zzz.sleep >> // should not sleep
+    IO.pure(3).debug
+
   def run: IO[Unit] = 
     for {
-      zzz <- Zzz.create
+      zzz <- Zzz.awake
       _   <- (task1(zzz), task2(zzz)).parTupled
-      _   <- (task1(zzz), task2(zzz)).parTupled
+      _   <- (task1(zzz), task3(zzz), task2(zzz)).parTupled
     } yield ()
 }
